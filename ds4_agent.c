@@ -6102,6 +6102,15 @@ static bool agent_edit_find_old_span(const char *data, size_t len,
     size_t head_len = (size_t)(upto - old);
     const char *tail = upto + strlen(marker);
     size_t tail_len = old_len - head_len - strlen(marker);
+    /* Strip leading newline/CR from tail before searching.  The head already
+     * includes the newline at its end, so the extra \n that follows [upto] in
+     * the old text (whether injected by the forcer or written by the model)
+     * must not be part of the tail needle -- the file after the head has no
+     * duplicate newline. */
+    while (tail_len > 0 && (*tail == '\n' || *tail == '\r')) {
+        tail++;
+        tail_len--;
+    }
     if (!agent_span_has_nonspace(tail, tail_len)) {
         snprintf(err, err_len,
                  "old text after [upto] must include a unique tail anchor");
